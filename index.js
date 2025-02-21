@@ -28,6 +28,7 @@ async function run() {
         await client.connect();
 
         const userCollection = client.db('TaskHiveDB').collection('users')
+        const taskCollection = client.db('TaskHiveDB').collection('tasks')
 
 
 
@@ -45,7 +46,12 @@ async function run() {
         })
 
 
-
+        // Task related api
+        app.post('/tasks', async (req, res)=>{
+            const task = req.body
+            const result = await taskCollection.insertOne(task)
+            res.send(result)
+        })
 
 
 
