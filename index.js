@@ -27,6 +27,22 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
 
+        const userCollection = client.db('TaskHiveDB').collection('users')
+
+
+
+
+        // user related apis
+        app.post('/users', async (req, res) => {
+            const user = req.body
+            const query = { email : user.email }
+            const existUser = await userCollection.findOne(query)
+            if(existUser){
+                return res.send({message : 'user already exist', insertedId: null })
+            }
+            const result = await userCollection.insertOne(user)
+            res.send(result)
+        })
 
 
 
@@ -36,7 +52,6 @@ async function run() {
 
 
 
-        
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
