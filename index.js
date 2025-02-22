@@ -36,10 +36,10 @@ async function run() {
         // user related apis
         app.post('/users', async (req, res) => {
             const user = req.body
-            const query = { email : user.email }
+            const query = { email: user.email }
             const existUser = await userCollection.findOne(query)
-            if(existUser){
-                return res.send({message : 'user already exist', insertedId: null })
+            if (existUser) {
+                return res.send({ message: 'user already exist', insertedId: null })
             }
             const result = await userCollection.insertOne(user)
             res.send(result)
@@ -47,9 +47,47 @@ async function run() {
 
 
         // Task related api
-        app.post('/tasks', async (req, res)=>{
+        app.post('/tasks', async (req, res) => {
             const task = req.body
             const result = await taskCollection.insertOne(task)
+            res.send(result)
+        })
+
+        app.get('/tasks', async (req, res) => {
+            const email = req.query.email
+
+            const result = await taskCollection.aggregate([
+                {
+                    "$match": { "email": email }
+                },
+                {
+                    "$facet": {
+                        "ToDo": [
+                            { "$match": { "category": "To-Do" } },
+                            { "$group": { "_id": "To-Do", "tasks": { "$push": "$$ROOT" } } }
+                        ],
+                        "InProgress": [
+                            { "$match": { "category": "In-Progress" } },
+                            { "$group": { "_id": "In-Progress", "tasks": { "$push": "$$ROOT" } } }
+                        ],
+                        "Done": [
+                            { "$match": { "category": "Done" } },
+                            { "$group": { "_id": "Done", "tasks": { "$push": "$$ROOT" } } }
+                        ]
+                    }
+                },
+                {
+                    "$project": {
+                        "categories": {
+                            "$concatArrays": [
+                                "$ToDo",
+                                "$InProgress",
+                                "$Done"
+                            ]
+                        }
+                    }
+                }
+            ]).toArray()
             res.send(result)
         })
 
